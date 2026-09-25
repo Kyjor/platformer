@@ -36,7 +36,7 @@ jobs:
 
       - name: Install SDL2 (macOS)
         if: runner.os == 'macOS'
-        run: brew install sdl2 sdl2_image sdl2_mixer dylibbundler pkg-config
+        run: brew install sdl2 sdl2_image sdl2_mixer sdl3 dylibbundler pkg-config
 
       - name: Install SDL2 (Windows)
         if: runner.os == 'Windows'

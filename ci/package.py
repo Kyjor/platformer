@@ -71,6 +71,31 @@ def bundle_linux(binary: Path):
         force_origin_rpath(lib)
 
 
+def find_sdl3() -> Path | None:
+    for cmd in (
+        ["pkg-config", "--variable=libdir", "sdl3"],
+        ["brew", "--prefix", "sdl3"],
+    ):
+        try:
+            out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            continue
+        libdir = Path(out) if Path(out).name == "lib" else Path(out) / "lib"
+        for name in ("libSDL3.dylib", "libSDL3.0.dylib"):
+            cand = libdir / name
+            if cand.exists():
+                return cand.resolve()
+    return None
+
+
+def sdl2_needs_sdl3(lib: Path) -> bool:
+    for path in lib.glob("libSDL2*.dylib"):
+        data = path.read_bytes()
+        if b"sdl2-compat" in data or b"Failed loading SDL3" in data:
+            return True
+    return False
+
+
 def bundle_mac(binary: Path):
     lib = binary.parent / "lib"
     lib.mkdir()
@@ -80,6 +105,26 @@ def bundle_mac(binary: Path):
         "-b",
         "-x",
         str(binary),
+        "-d",
+        str(lib),
+        "-p",
+        "@executable_path/lib",
+    ])
+    # Homebrew SDL2 is sdl2-compat and dlopens SDL3, which dylibbundler cannot see.
+    sdl3 = find_sdl3()
+    if sdl3 is None:
+        if sdl2_needs_sdl3(lib):
+            sys.exit("SDL3 not found; Homebrew sdl2-compat loads it at runtime")
+        return
+    dest = lib / "libSDL3.dylib"
+    shutil.copy2(sdl3, dest)
+    shutil.copy2(sdl3, binary.parent / "libSDL3.dylib")
+    subprocess.check_call([
+        "dylibbundler",
+        "-od",
+        "-b",
+        "-x",
+        str(dest),
         "-d",
         str(lib),
         "-p",
