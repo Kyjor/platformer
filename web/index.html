@@ -32,7 +32,7 @@
       print: function () { console.log.apply(console, arguments); },
       printErr: function () { console.error.apply(console, arguments); },
       onRuntimeInitialized: function () {
-        if (window.onModuleReady) window.onModuleReady();
+        Module.setStatus("");
       },
       setStatus: function (text) {
         statusElement.textContent = text || "";

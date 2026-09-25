@@ -42,7 +42,7 @@ if build_type == "web"
     write(combined_ll, ir)
     js_out = joinpath(output_dir, "game.js")
     run(Cmd([
-        "emcc", combined_ll, "sdl/sdl_module.c",
+        "emcc", combined_ll, "sdl/sdl_module.c", "host/web_main.c",
         "-s", "USE_SDL=2",
         "-s", "USE_SDL_IMAGE=2",
         "-s", "SDL2_IMAGE_FORMATS=[\"png\"]",
@@ -51,8 +51,8 @@ if build_type == "web"
         "-s", "USE_WEBGL2=1",
         "-O2",
         "-s", "WASM=1",
-        "-s", "EXPORTED_FUNCTIONS=['_game_loop','_j_init_game_state','_j_init_window','_j_init_renderer','_cleanup','_malloc','_free']",
-        "-s", "EXPORTED_RUNTIME_METHODS=['cwrap']",
+        "-s", "EXPORTED_FUNCTIONS=['_main','_malloc','_free']",
+        "-s", "EXPORTED_RUNTIME_METHODS=['ccall','cwrap']",
         "-s", "ALLOW_MEMORY_GROWTH=1",
         "-s", "INITIAL_MEMORY=33554432",
         "-s", "ALLOW_TABLE_GROWTH=1",

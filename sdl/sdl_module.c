@@ -20,11 +20,13 @@ int print_string(const char *str) {
     return 1;
 }
 
+int sc_is_web(void) {
 #ifdef __EMSCRIPTEN__
-int main(void) {
+    return 1;
+#else
     return 0;
-}
 #endif
+}
 
 static int32_t g_hi = 1;
 

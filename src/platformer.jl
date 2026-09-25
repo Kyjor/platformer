@@ -95,7 +95,9 @@ function game_loop(state::Ptr{Platformer}, renderer::Ptr{SDL_Renderer}, window::
         end
         draw_level(state, renderer)
     end
-    llvm_SDL_Delay(UInt32(16))
+    if llvm_sc_is_web() == Int32(0)
+        llvm_SDL_Delay(UInt32(16))
+    end
     return state
 end
 

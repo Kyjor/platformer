@@ -9,6 +9,10 @@
 // External declaration of the Julia pc_main function
 extern int pc_main(void);
 
+int sc_is_web(void) {
+    return 0;
+}
+
 #ifdef __APPLE__
 static void chdir_to_executable(void) {
     char path[4096];

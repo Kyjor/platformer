@@ -9,6 +9,18 @@ function call_print_string(ptr::Ptr{UInt8})::Int32
     """, "main"), Int32, Tuple{Ptr{UInt8}}, ptr)
 end
 
+function llvm_sc_is_web()::Int32
+    Base.llvmcall(("""
+        declare i32 @sc_is_web() nounwind
+
+        define i32 @main() {
+        entry:
+            %result = call i32 @sc_is_web()
+            ret i32 %result
+        }
+    """, "main"), Int32, Tuple{},)
+end
+
 function wasm_malloc(size::UInt32)::Ptr{Cvoid}
     Base.llvmcall(("""
         declare noalias i8* @malloc(i32) nounwind
