@@ -1,0 +1,29 @@
+using StaticTools
+using StaticCompiler
+
+include("src/platformer.jl")
+
+output_dir = "build"
+if !isdir(output_dir)
+    mkdir(output_dir)
+end
+
+entry_sig(f) = Tuple(only(methods(f)).sig.parameters[2:end])
+functions_to_compile = [
+    (j_init_game_state, entry_sig(j_init_game_state), "j_init_game_state"),
+    (j_init_window, entry_sig(j_init_window), "j_init_window"),
+    (j_init_renderer, entry_sig(j_init_renderer), "j_init_renderer"),
+    (game_loop, entry_sig(game_loop), "game_loop"),
+    (cleanup, entry_sig(cleanup), "cleanup"),
+    (pc_main, entry_sig(pc_main), "pc_main"),
+]
+
+for (func, types, name) in functions_to_compile
+    println("Compiling $name...")
+    StaticCompiler.generate_obj(func, types, output_dir, name, emit_llvm_only=false)
+end
+
+o_files = filter(f -> endswith(f, ".o"), readdir(output_dir, join=true))
+rpath = "-Wl,-rpath," * raw"$ORIGIN"
+run(`gcc $o_files host/pc_main.c -lSDL2 -lSDL2main -lSDL2_image -lSDL2_mixer -lGL $rpath -o build/game -O2`)
+println("build/game")
