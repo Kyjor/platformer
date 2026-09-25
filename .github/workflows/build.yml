@@ -125,6 +125,9 @@ jobs:
           version: 3.1.74
           actions-cache-folder: emsdk-cache
 
+      - name: Install llvm-link
+        run: sudo apt-get update && sudo apt-get install -y llvm
+
       - name: Compile and package
         run: bash ci/build_web.sh
 
