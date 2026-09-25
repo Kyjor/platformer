@@ -53,15 +53,13 @@ jobs:
             mingw-w64-ucrt-x86_64-ntldd
 
       - name: Compile and package
-        shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
-        run: |
-          julia --project=. -e 'using Pkg; Pkg.instantiate()'
-          julia --project=. compile.jl
-          if command -v python3 >/dev/null 2>&1; then
-            python3 ci/package.py
-          else
-            python ci/package.py
-          fi
+        if: runner.os != 'Windows'
+        run: bash ci/build.sh
+
+      - name: Compile and package
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: bash ci/build.sh
 
       - uses: actions/upload-artifact@v4
         with:
