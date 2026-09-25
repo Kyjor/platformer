@@ -5398,10 +5398,6 @@ struct Mix_Chunk
     volume::Uint8
 end
 
-struct Mix_Music
-    unused::UInt8
-end
-
 @cenum Mix_Fading::UInt32 begin
     MIX_NO_FADING = 0
     MIX_FADING_OUT = 1
