@@ -24,6 +24,16 @@ for (func, types, name) in functions_to_compile
 end
 
 o_files = filter(f -> endswith(f, ".o"), readdir(output_dir, join=true))
-rpath = "-Wl,-rpath," * raw"$ORIGIN"
-run(`gcc $o_files host/pc_main.c -lSDL2 -lSDL2main -lSDL2_image -lSDL2_mixer -lGL $rpath -o build/game -O2`)
-println("build/game")
+if Sys.iswindows()
+    run(`gcc $o_files host/pc_main.c -o build/game.exe -O2 -lSDL2_image -lSDL2_mixer -lSDL2`)
+    println("build/game.exe")
+elseif Sys.isapple()
+    flags = split(strip(read(`pkg-config --libs sdl2 SDL2_image SDL2_mixer`, String)))
+    rpath = "-Wl,-rpath,@executable_path/lib"
+    run(`cc $o_files host/pc_main.c -o build/game -O2 $flags $rpath`)
+    println("build/game")
+else
+    rpath = "-Wl,-rpath," * raw"$ORIGIN"
+    run(`gcc $o_files host/pc_main.c -lSDL2 -lSDL2main -lSDL2_image -lSDL2_mixer -lGL $rpath -o build/game -O2`)
+    println("build/game")
+end

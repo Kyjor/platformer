@@ -1,0 +1,14 @@
+name = "Platformer"
+uuid = "b7e4c1a2-6f3d-4a8e-9c15-2d8f0a6e4b71"
+version = "0.1.0"
+
+[deps]
+CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
+StaticCompiler = "81625895-6c0f-48fc-b932-11a18313743c"
+StaticTools = "86c06d3c-3f03-46de-9781-57580aa96d0a"
+
+[compat]
+CEnum = "0.5"
+StaticCompiler = "=0.7.2"
+StaticTools = "0.8"
+julia = "1.10"

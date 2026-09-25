@@ -1,0 +1,99 @@
+name: Build
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.artifact }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: platformer-linux-x64
+          - os: macos-latest
+            artifact: platformer-macos-arm64
+          - os: windows-latest
+            artifact: platformer-windows-x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.10"
+
+      - uses: julia-actions/cache@v2
+
+      - name: Install SDL2 (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y gcc libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libgl1-mesa-dev
+
+      - name: Install SDL2 (macOS)
+        if: runner.os == 'macOS'
+        run: brew install sdl2 sdl2_image sdl2_mixer dylibbundler pkg-config
+
+      - name: Install SDL2 (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          path-type: inherit
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-SDL2
+            mingw-w64-ucrt-x86_64-SDL2_image
+            mingw-w64-ucrt-x86_64-SDL2_mixer
+            mingw-w64-ucrt-x86_64-ntldd
+
+      - name: Compile and package
+        shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+        run: |
+          julia --project=. -e 'using Pkg; Pkg.instantiate()'
+          julia --project=. compile.jl
+          if command -v python3 >/dev/null 2>&1; then
+            python3 ci/package.py
+          else
+            python ci/package.py
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}.zip
+          if-no-files-found: error
+
+  publish:
+    name: Publish latest
+    needs: build
+    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: platformer-*
+          merge-multiple: false
+
+      - name: Update the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shopt -s globstar nullglob
+          zips=(artifacts/**/*.zip)
+          if [ ${#zips[@]} -eq 0 ]; then
+            echo "No builds to publish"
+            exit 0
+          fi
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest "${zips[@]}" \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Latest build" \
+            --notes "Unzip a platform archive and run the game from that folder."
