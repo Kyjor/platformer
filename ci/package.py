@@ -90,14 +90,17 @@ def bundle_mac(binary: Path):
 def wrap_mac_app(stage: Path) -> Path:
     app = stage / "Platformer.app"
     macos = app / "Contents" / "MacOS"
+    resources = app / "Contents" / "Resources"
     if app.exists():
         shutil.rmtree(app)
     macos.mkdir(parents=True)
+    resources.mkdir(parents=True)
     shutil.copy2(root / "ci" / "macos" / "Info.plist", app / "Contents" / "Info.plist")
     for item in list(stage.iterdir()):
         if item.name == "Platformer.app":
             continue
-        shutil.move(str(item), str(macos / item.name))
+        dest = resources / item.name if item.name == "assets" else macos / item.name
+        shutil.move(str(item), str(dest))
     return app
 
 

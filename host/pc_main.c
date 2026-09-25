@@ -21,8 +21,12 @@ static void chdir_to_executable(void) {
         return;
     }
     char *dir = dirname(resolved);
-    if (dir != NULL) {
-        chdir(dir);
+    if (dir == NULL) {
+        return;
+    }
+    chdir(dir);
+    if (access("assets", F_OK) != 0 && access("../Resources/assets", F_OK) == 0) {
+        chdir("../Resources");
     }
 }
 #endif
