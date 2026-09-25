@@ -25,9 +25,12 @@ if build_type == "desktop"
     push!(functions_to_compile, (pc_main, entry_sig(pc_main), "pc_main"))
 end
 
+# Julia's own object emitter uses the System V register order. On Windows that
+# passes SDL the window width where it expects the title pointer. Clang
+# recompiles the IR with the Windows calling convention.
 for (func, types, name) in functions_to_compile
     println("Compiling $name...")
-    StaticCompiler.generate_obj(func, types, output_dir, name, emit_llvm_only=(build_type == "web"))
+    StaticCompiler.generate_obj(func, types, output_dir, name; emit_llvm_only=(build_type == "web" || Sys.iswindows()))
 end
 
 if build_type == "web"
@@ -62,7 +65,13 @@ if build_type == "web"
     ]))
     println(js_out)
 elseif Sys.iswindows()
-    o_files = filter(f -> endswith(f, ".o"), readdir(output_dir, join=true))
+    o_files = String[]
+    for (_, _, name) in functions_to_compile
+        ll = joinpath(output_dir, "$name.ll")
+        obj = joinpath(output_dir, "$name.o")
+        run(`clang -c -O2 -Wno-override-module $ll -o $obj`)
+        push!(o_files, obj)
+    end
     run(`gcc $o_files host/pc_main.c -o build/game.exe -O2 -lSDL2_image -lSDL2_mixer -lSDL2`)
     println("build/game.exe")
 elseif Sys.isapple()
