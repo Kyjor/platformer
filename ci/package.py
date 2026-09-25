@@ -124,7 +124,32 @@ def bundle_windows(binary: Path):
         shutil.copy2(source, stage_root / source.name)
 
 
+def package_web():
+    js = build / "game.js"
+    wasm = build / "game.wasm"
+    data = build / "game.data"
+    for path in (js, wasm, data):
+        if not path.is_file():
+            sys.exit(f"missing {path}")
+    stage = root / "dist" / "platformer-web"
+    if stage.exists():
+        shutil.rmtree(stage)
+    stage.mkdir(parents=True)
+    shutil.copy2(root / "web" / "index.html", stage / "index.html")
+    shutil.copy2(root / "web" / "index.js", stage / "index.js")
+    shutil.copy2(js, stage / "game.js")
+    shutil.copy2(wasm, stage / "game.wasm")
+    shutil.copy2(data, stage / "game.data")
+    zip_path = root / "dist" / "platformer-web"
+    shutil.make_archive(str(zip_path), "zip", root / "dist", "platformer-web")
+    print(zip_path.with_suffix(".zip"))
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == "web":
+        package_web()
+        return
+
     if (build / "game.exe").exists():
         kind = "windows"
         binary_name = "game.exe"

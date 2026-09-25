@@ -108,9 +108,35 @@ jobs:
           path: dist/${{ matrix.artifact }}.zip
           if-no-files-found: error
 
+  web:
+    name: platformer-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.10"
+
+      - uses: julia-actions/cache@v2
+
+      - uses: emscripten-core/setup-emsdk@v16
+        with:
+          version: 3.1.74
+          actions-cache-folder: emsdk-cache
+
+      - name: Compile and package
+        run: bash ci/build_web.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: platformer-web
+          path: dist/platformer-web.zip
+          if-no-files-found: error
+
   publish:
     name: Publish latest
-    needs: build
+    needs: [build, web]
     if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -138,4 +164,4 @@ jobs:
             --prerelease \
             --target "$GITHUB_SHA" \
             --title "Latest build" \
-            --notes "Unzip a platform archive and run the game. On macOS, open Platformer.app (signed by Kyle Conel / AKG5NATH99)."
+            --notes "Unzip a platform archive and run the game. On macOS, open Platformer.app (signed by Kyle Conel / AKG5NATH99). For web, unzip platformer-web and serve the folder (python3 -m http.server)."

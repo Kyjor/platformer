@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Platformer</title>
+  <style>
+    html, body { margin: 0; background: #111; color: #ccc; font-family: sans-serif; }
+    #wrap { text-align: center; padding: 16px; }
+    canvas {
+      background: #000;
+      width: 1280px;
+      height: 720px;
+      max-width: 100%;
+      height: auto;
+      image-rendering: pixelated;
+    }
+    #status { min-height: 1.5em; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="status">Downloading…</div>
+    <progress id="progress" hidden></progress>
+    <canvas id="canvas" width="1280" height="720" tabindex="-1"></canvas>
+  </div>
+  <script>
+    var statusElement = document.getElementById("status");
+    var canvasElement = document.getElementById("canvas");
+    var Module = {
+      canvas: canvasElement,
+      print: function () { console.log.apply(console, arguments); },
+      printErr: function () { console.error.apply(console, arguments); },
+      onRuntimeInitialized: function () {
+        if (window.onModuleReady) window.onModuleReady();
+      },
+      setStatus: function (text) {
+        statusElement.textContent = text || "";
+      },
+      totalDependencies: 0,
+      monitorRunDependencies: function (left) {
+        this.totalDependencies = Math.max(this.totalDependencies, left);
+        Module.setStatus(left ? "Preparing…" : "");
+      }
+    };
+  </script>
+  <script src="index.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
