@@ -19,7 +19,8 @@ static void frame(void) {
 }
 
 int main(void) {
-    SDL_SetHint(SDL_HINT_EMSCRIPTEN_CANVAS_SELECTOR, "#canvas");
+    /* Emscripten's SDL2 port does not define this hint macro. */
+    SDL_SetHint("SDL_EMSCRIPTEN_CANVAS_SELECTOR", "#canvas");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
         printf("SDL_Init failed: %s\n", SDL_GetError());
         return 1;
