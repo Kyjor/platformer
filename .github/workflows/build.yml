@@ -34,9 +34,9 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y gcc patchelf libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libgl1-mesa-dev
 
-      - name: Install SDL2 (macOS)
+      - name: Install official SDL2 frameworks
         if: runner.os == 'macOS'
-        run: brew install sdl2 sdl2_image sdl2_mixer sdl3 dylibbundler pkg-config
+        run: bash ci/macos/fetch-sdl.sh
 
       - name: Install SDL2 (Windows)
         if: runner.os == 'Windows'

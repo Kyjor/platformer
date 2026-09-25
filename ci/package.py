@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import platform
 import shutil
 import subprocess
@@ -71,65 +72,17 @@ def bundle_linux(binary: Path):
         force_origin_rpath(lib)
 
 
-def find_sdl3() -> Path | None:
-    for cmd in (
-        ["pkg-config", "--variable=libdir", "sdl3"],
-        ["brew", "--prefix", "sdl3"],
-    ):
-        try:
-            out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            continue
-        libdir = Path(out) if Path(out).name == "lib" else Path(out) / "lib"
-        for name in ("libSDL3.dylib", "libSDL3.0.dylib"):
-            cand = libdir / name
-            if cand.exists():
-                return cand.resolve()
-    return None
-
-
-def sdl2_needs_sdl3(lib: Path) -> bool:
-    for path in lib.glob("libSDL2*.dylib"):
-        data = path.read_bytes()
-        if b"sdl2-compat" in data or b"Failed loading SDL3" in data:
-            return True
-    return False
-
-
 def bundle_mac(binary: Path):
-    lib = binary.parent / "lib"
-    lib.mkdir()
-    subprocess.check_call([
-        "dylibbundler",
-        "-od",
-        "-b",
-        "-x",
-        str(binary),
-        "-d",
-        str(lib),
-        "-p",
-        "@executable_path/lib",
-    ])
-    # Homebrew SDL2 is sdl2-compat and dlopens SDL3, which dylibbundler cannot see.
-    sdl3 = find_sdl3()
-    if sdl3 is None:
-        if sdl2_needs_sdl3(lib):
-            sys.exit("SDL3 not found; Homebrew sdl2-compat loads it at runtime")
-        return
-    dest = lib / "libSDL3.dylib"
-    shutil.copy2(sdl3, dest)
-    shutil.copy2(sdl3, binary.parent / "libSDL3.dylib")
-    subprocess.check_call([
-        "dylibbundler",
-        "-od",
-        "-b",
-        "-x",
-        str(dest),
-        "-d",
-        str(lib),
-        "-p",
-        "@executable_path/lib",
-    ])
+    fw_src = Path(os.environ.get("SDL_FRAMEWORK_PATH", ""))
+    if not fw_src.is_dir():
+        sys.exit("SDL_FRAMEWORK_PATH is unset; run ci/macos/fetch-sdl.sh")
+    dest = binary.parent / "Frameworks"
+    dest.mkdir()
+    for name in ("SDL2.framework", "SDL2_image.framework", "SDL2_mixer.framework"):
+        src = fw_src / name
+        if not src.is_dir():
+            sys.exit(f"missing {src}")
+        shutil.copytree(src, dest / name, symlinks=True)
 
 
 def wrap_mac_app(stage: Path) -> Path:
@@ -144,7 +97,12 @@ def wrap_mac_app(stage: Path) -> Path:
     for item in list(stage.iterdir()):
         if item.name == "Platformer.app":
             continue
-        dest = resources / item.name if item.name == "assets" else macos / item.name
+        if item.name == "assets":
+            dest = resources / item.name
+        elif item.name == "Frameworks":
+            dest = app / "Contents" / "Frameworks"
+        else:
+            dest = macos / item.name
         shutil.move(str(item), str(dest))
     return app
 

@@ -31,6 +31,12 @@ find "$app" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 |
   while IFS= read -r -d '' lib; do
     codesign --force --options runtime --timestamp --sign "$identity" "$lib"
   done
+if [[ -d "$app/Contents/Frameworks" ]]; then
+  find "$app/Contents/Frameworks" -name "*.framework" -prune -print0 |
+    while IFS= read -r -d '' fw; do
+      codesign --force --options runtime --timestamp --sign "$identity" "$fw"
+    done
+fi
 
 codesign --force --options runtime --timestamp --entitlements "$ent_copy" \
   --sign "$identity" "$app/Contents/MacOS/game"

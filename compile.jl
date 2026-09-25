@@ -28,9 +28,12 @@ if Sys.iswindows()
     run(`gcc $o_files host/pc_main.c -o build/game.exe -O2 -lSDL2_image -lSDL2_mixer -lSDL2`)
     println("build/game.exe")
 elseif Sys.isapple()
-    flags = split(strip(read(`pkg-config --libs sdl2 SDL2_image SDL2_mixer`, String)))
-    rpath = "-Wl,-rpath,@executable_path/lib"
-    run(`cc $o_files host/pc_main.c -o build/game -O2 $flags $rpath`)
+    fw = get(ENV, "SDL_FRAMEWORK_PATH", "")
+    if isempty(fw)
+        error("SDL_FRAMEWORK_PATH is unset; run ci/macos/fetch-sdl.sh")
+    end
+    rpath = "-Wl,-rpath,@executable_path/../Frameworks"
+    run(`cc $o_files host/pc_main.c -o build/game -O2 -F$fw -framework SDL2 -framework SDL2_image -framework SDL2_mixer $rpath`)
     println("build/game")
 else
     rpath = "-Wl,--disable-new-dtags,-rpath," * raw"$ORIGIN"
