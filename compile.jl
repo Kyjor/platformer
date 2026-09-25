@@ -33,7 +33,7 @@ elseif Sys.isapple()
     run(`cc $o_files host/pc_main.c -o build/game -O2 $flags $rpath`)
     println("build/game")
 else
-    rpath = "-Wl,-rpath," * raw"$ORIGIN"
+    rpath = "-Wl,--disable-new-dtags,-rpath," * raw"$ORIGIN"
     run(`gcc $o_files host/pc_main.c -lSDL2 -lSDL2main -lSDL2_image -lSDL2_mixer -lGL $rpath -o build/game -O2`)
     println("build/game")
 end

@@ -50,6 +50,10 @@ def ldd(path: Path):
     return libs
 
 
+def force_origin_rpath(path: Path):
+    subprocess.check_call(["patchelf", "--force-rpath", "--set-rpath", "$ORIGIN", str(path)])
+
+
 def bundle_linux(binary: Path):
     seen = set()
     queue = [binary]
@@ -62,6 +66,9 @@ def bundle_linux(binary: Path):
             dest = stage_root / lib.name
             shutil.copy2(lib, dest)
             queue.append(dest)
+    force_origin_rpath(binary)
+    for lib in stage_root.glob("*.so*"):
+        force_origin_rpath(lib)
 
 
 def bundle_mac(binary: Path):
