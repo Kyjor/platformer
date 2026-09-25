@@ -72,7 +72,7 @@ def bundle_linux(binary: Path):
 
 
 def bundle_mac(binary: Path):
-    lib = stage_root / "lib"
+    lib = binary.parent / "lib"
     lib.mkdir()
     subprocess.check_call([
         "dylibbundler",
@@ -85,6 +85,20 @@ def bundle_mac(binary: Path):
         "-p",
         "@executable_path/lib",
     ])
+
+
+def wrap_mac_app(stage: Path) -> Path:
+    app = stage / "Platformer.app"
+    macos = app / "Contents" / "MacOS"
+    if app.exists():
+        shutil.rmtree(app)
+    macos.mkdir(parents=True)
+    shutil.copy2(root / "ci" / "macos" / "Info.plist", app / "Contents" / "Info.plist")
+    for item in list(stage.iterdir()):
+        if item.name == "Platformer.app":
+            continue
+        shutil.move(str(item), str(macos / item.name))
+    return app
 
 
 def bundle_windows(binary: Path):
@@ -133,11 +147,14 @@ def main():
         bundle_linux(staged)
     elif kind == "mac":
         bundle_mac(staged)
+        wrap_mac_app(stage_root)
     else:
         bundle_windows(staged)
 
     zip_path = root / "dist" / archive
-    shutil.make_archive(str(zip_path), "zip", root / "dist", "platformer")
+    archive_item = "Platformer.app" if kind == "mac" else "platformer"
+    archive_root = stage_root if kind == "mac" else root / "dist"
+    shutil.make_archive(str(zip_path), "zip", archive_root, archive_item)
     print(zip_path.with_suffix(".zip"))
 
 
