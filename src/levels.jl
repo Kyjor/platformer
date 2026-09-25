@@ -28,15 +28,6 @@ function level_player_y(level::Int32)::Float64
 end
 
 function level_jump_velocity(level::Int32)::Float64
-    if level == Int32(1)
-        return Float64(-7.0)
-    end
-    if level == Int32(2)
-        return Float64(-10.0)
-    end
-    if level == Int32(3)
-        return Float64(-6.5)
-    end
     return Float64(-7.0)
 end
 
