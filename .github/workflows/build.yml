@@ -93,12 +93,12 @@ jobs:
       - name: Sign and notarize
         if: runner.os == 'macOS'
         env:
-          CODESIGN_IDENTITY: ${{ secrets.CODESIGN_IDENTITY || 'Developer ID Application: Kyle Conel (AKG5NATH99)' }}
+          CODESIGN_IDENTITY: ${{ secrets.CODESIGN_IDENTITY }}
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_PATH: ${{ env.APP_STORE_CONNECT_API_KEY_PATH }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || 'AKG5NATH99' }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           NOTARY_APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
         run: bash ci/sign_mac.sh
 
